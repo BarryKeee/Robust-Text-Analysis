@@ -10,7 +10,7 @@ import pickle
 topic_num = 40
 maxit = 1000
 draw_num = 120
-eps = 1e-5
+eps = 1e-10
 
 def LDA_implementation(text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5):
     ldaobj = topicmodels.LDA.LDAGibbs(text, topic_num)
