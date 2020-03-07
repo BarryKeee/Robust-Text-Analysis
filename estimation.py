@@ -1,5 +1,4 @@
 import numpy as np
-import numba
 import statsmodels.api as sm
 import pandas as pd
 from Constant import *
@@ -23,7 +22,7 @@ def LDA_implementation(text, alpha=1.25, beta=0.025, burning=4000, sample_freq=5
     return theta, B, perplexity
 
 
-@numba.jit()
+
 def NNF(P, k, eps, maxit):
     V, D = P.shape
     W = P
@@ -49,9 +48,9 @@ def NNF(P, k, eps, maxit):
     return B_norm, Theta_norm
 
 
-@numba.jit()
+
 def KL(W, P, B, Theta):
-    P_hat = np.matmul(B, Theta)
+    P_hat = np.dot(B, Theta)
     loss = np.sum(W * (P * np.log(P / P_hat) - P + P_hat))
 
     return loss
@@ -119,10 +118,10 @@ def main():
     td_matrix2_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC2_meeting_matrix.xlsx'), index_col=0)
 
     print('Running Standard LDA Implementation')
-    theta_FOMC1, _, _ = LDA_implementation(FOMC1_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
-    theta_FOMC2, _, _ = LDA_implementation(FOMC2_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
-    HHI_FOMC1 = (theta_FOMC1 ** 2).sum(axis=1)
-    HHI_FOMC2 = (theta_FOMC2 ** 2).sum(axis=1)
+    #theta_FOMC1, _, _ = LDA_implementation(FOMC1_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
+    #theta_FOMC2, _, _ = LDA_implementation(FOMC2_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
+    #HHI_FOMC1 = (theta_FOMC1 ** 2).sum(axis=1)
+    #HHI_FOMC2 = (theta_FOMC2 ** 2).sum(axis=1)
     print('Finished')
 
     td_matrix1 = td_matrix1_raw / td_matrix1_raw.sum(axis=0)
