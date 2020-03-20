@@ -51,7 +51,7 @@ def NNF(P, k, eps, maxit):
 
 def KL(W, P, B, Theta):
     P_hat = np.dot(B, Theta)
-    loss = np.sum(W * (P * np.log(P / P_hat) - P + P_hat))
+    loss = np.sum(np.sum(W * (P * np.log(P / P_hat) - P + P_hat)))
 
     return loss
 
@@ -95,9 +95,9 @@ def plot_region(Herfindahl, HHI, index, section, dpi=100):
 
     plt.title('Herfindahl measure of topic concentration in {}'.format(section))
     # plt.legend(handles = [LDA])
-    plt.savefig(os.path.join(PLOT_PATH, 'HHI_{}.eps'.format(section)), format='eps', dpi=dpi)
+    plt.savefig(os.path.join(PLOT_PATH, 'HHI_{}.png'.format(section)), format='png', dpi=dpi)
 
-def regression_single(HHI, stem_num, cov_type='HAC', maxlags=4):
+def regression_single(HHI, stem_num):
 
     covariates = pd.read_csv(os.path.join(UTILFILE_PATH,'covariates.csv'))
     covariates['num_stems'] = stem_num
@@ -110,18 +110,18 @@ def regression_single(HHI, stem_num, cov_type='HAC', maxlags=4):
 def main():
 
     print('Reading cached data')
-    with open(os.path.join(MATRIX_PATH, 'FOMC1_text.pkl'),'rb') as f:
+    with open(os.path.join(MATRIX_PATH, 'FOMC1_text_onlyTF.pkl'),'rb') as f:
         FOMC1_text = pickle.load(f)
-    with open(os.path.join(MATRIX_PATH, 'FOMC2_text.pkl'),'rb') as f:
+    with open(os.path.join(MATRIX_PATH, 'FOMC2_text_onlyTF.pkl'),'rb') as f:
         FOMC2_text = pickle.load(f)
-    td_matrix1_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC1_meeting_matrix.xlsx'), index_col=0)
-    td_matrix2_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC2_meeting_matrix.xlsx'), index_col=0)
+    td_matrix1_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC1_meeting_matrix_onlyTF.xlsx'), index_col=0)
+    td_matrix2_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC2_meeting_matrix_onlyTF.xlsx'), index_col=0)
 
     print('Running Standard LDA Implementation')
-    #theta_FOMC1, _, _ = LDA_implementation(FOMC1_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
-    #theta_FOMC2, _, _ = LDA_implementation(FOMC2_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
-    #HHI_FOMC1 = (theta_FOMC1 ** 2).sum(axis=1)
-    #HHI_FOMC2 = (theta_FOMC2 ** 2).sum(axis=1)
+    theta_FOMC1, _, _ = LDA_implementation(FOMC1_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
+    theta_FOMC2, _, _ = LDA_implementation(FOMC2_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
+    HHI_FOMC1 = (theta_FOMC1 ** 2).sum(axis=1)
+    HHI_FOMC2 = (theta_FOMC2 ** 2).sum(axis=1)
     print('Finished')
 
     td_matrix1 = td_matrix1_raw / td_matrix1_raw.sum(axis=0)
@@ -151,8 +151,8 @@ def main():
     params2.to_excel('FOMC2_coef.xlsx')
     bse2.to_excel('FOMC2_bse.xlsx')
 
-    model_FOMC1 = regression_single(HHI_FOMC1, stem_num1, cov_type='HAC', maxlags=4)
-    model_FOMC2 = regression_single(HHI_FOMC2, stem_num2, cov_type='HAC', maxlags=4)
+    model_FOMC1 = regression_single(HHI_FOMC1, stem_num1)
+    model_FOMC2 = regression_single(HHI_FOMC2, stem_num2)
 
     summary1 = pd.DataFrame(index = model_FOMC1.params.index)
     summary1['Coef'] = model_FOMC1.params

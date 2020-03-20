@@ -49,6 +49,5 @@ def plot_word_cloud(text, filename='wordcloud.eps', format='eps',
     plt.imshow(wordcloud)
     plt.axis("off")
     fig.tight_layout()
-    plt.show()
     plt.savefig(os.path.join(PLOT_PATH, filename), format=format, dpi=dpi, bbox_inches=bbox_inches)
 
