@@ -5,11 +5,13 @@ from Constant import *
 import matplotlib.pyplot as plt
 import topicmodels
 import pickle
+from VB_estimate import vb_estimate
+import timeit
 
 topic_num = 40
 maxit = 1000
 draw_num = 120
-eps = 1e-10
+eps = 1e-4
 
 def LDA_implementation(text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5):
     ldaobj = topicmodels.LDA.LDAGibbs(text, topic_num)
@@ -67,8 +69,7 @@ def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4):
                        columns=['Transparency', 'Recession', 'EPU', 'Twoday', 'PhDs', 'num_stems', 'Intercept'])
 
     for m in range(M):
-        print('Trial number {}'.format(str(m)))
-
+        start = timeit.default_timer()
         B, Theta = NNF(P, k, eps, maxit)
         HHI = (Theta ** 2).sum(axis=0)
         record[m] = HHI
@@ -77,7 +78,8 @@ def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4):
 
         params.loc[m] = model.get_robustcov_results(cov_type=cov_type, maxlags=maxlags).params
         bse.loc[m] = model.get_robustcov_results(cov_type=cov_type, maxlags=maxlags).bse
-
+        end = timeit.default_timer()
+        print('Finished Trial number {}. Time: {}'.format(str(m), end-start))
     return record, params, bse
 
 
@@ -88,6 +90,7 @@ def plot_region(Herfindahl, HHI, index, section, dpi=100):
     df['NMF min'] = Herfindahl.min(axis=0)
     df['LDA'] = HHI
 
+    fig = plt.figure()
     plt.plot(df['NMF max'], c='k', ls='--')
     plt.plot(df['NMF min'], c='k', ls='--')
     plt.fill_between(df.index, df['NMF max'], df['NMF min'], color='grey', alpha=0.1)
@@ -107,6 +110,7 @@ def regression_single(HHI, stem_num):
 
     return model
 
+
 def main():
 
     print('Reading cached data')
@@ -117,12 +121,16 @@ def main():
     td_matrix1_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC1_meeting_matrix_onlyTF.xlsx'), index_col=0)
     td_matrix2_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC2_meeting_matrix_onlyTF.xlsx'), index_col=0)
 
-    print('Running Standard LDA Implementation')
-    theta_FOMC1, _, _ = LDA_implementation(FOMC1_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
-    theta_FOMC2, _, _ = LDA_implementation(FOMC2_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
-    HHI_FOMC1 = (theta_FOMC1 ** 2).sum(axis=1)
-    HHI_FOMC2 = (theta_FOMC2 ** 2).sum(axis=1)
-    print('Finished')
+    #print('Running Gibbs Sampling LDA')
+    #theta_FOMC1, _, _ = LDA_implementation(FOMC1_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
+    #theta_FOMC2, _, _ = LDA_implementation(FOMC2_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
+    #HHI_FOMC1 = (theta_FOMC1 ** 2).sum(axis=1)
+    #HHI_FOMC2 = (theta_FOMC2 ** 2).sum(axis=1)
+    #print('Finished')
+
+    print('Running Variation Bayes LDA')
+    HHI_FOMC1, _, _ = vb_estimate('FOMC1',onlyTF=True, K=topic_num, alpha=1.25, eta=0.025)
+    HHI_FOMC2, _, _ = vb_estimate('FOMC2', onlyTF=True, K=topic_num, alpha=1.25, eta=0.025)
 
     td_matrix1 = td_matrix1_raw / td_matrix1_raw.sum(axis=0)
     td_matrix2 = td_matrix2_raw / td_matrix2_raw.sum(axis=0)
@@ -171,7 +179,7 @@ def main():
     print(summary1.round(4).T.to_latex())
     print('**************************************************************************************')
     print('Result for FOMC2')
-    print(summary1.round(4).T.to_latex())
+    print(summary2.round(4).T.to_latex())
 
 if __name__ == '__main__':
     main()

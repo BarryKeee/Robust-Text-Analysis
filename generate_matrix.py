@@ -214,6 +214,6 @@ stop_words = ['think','chairman','presid','governor',
                 'what','figur']
 
 if __name__ == '__main__':
-    text1, text2 = generate_tf_only_matrix(option='text', tf_idf_threshold=[200, 200], additional_stop_words=stop_words)
+    text1, text2 = generate_tf_only_matrix(option='text', tf_idf_threshold=[200, 150], additional_stop_words=stop_words)
     plot_word_cloud(text1, filename='WordCloud_FOMC1_onlyTF.png', format=None)
     plot_word_cloud(text2, filename='WordCloud_FOMC2_onlyTF.png', format=None)
