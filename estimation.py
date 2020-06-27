@@ -10,7 +10,7 @@ import timeit
 
 topic_num = 40
 maxit = 1000
-draw_num = 120
+draw_num = 200
 eps = 1e-4
 
 def LDA_implementation(text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5):
@@ -67,7 +67,8 @@ def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4):
                           columns=['Transparency', 'Recession', 'EPU', 'Twoday', 'PhDs', 'num_stems', 'Intercept'])
     bse = pd.DataFrame(index=range(M),
                        columns=['Transparency', 'Recession', 'EPU', 'Twoday', 'PhDs', 'num_stems', 'Intercept'])
-
+    tstat = pd.DataFrame(index=range(M),
+                       columns=['Transparency', 'Recession', 'EPU', 'Twoday', 'PhDs', 'num_stems', 'Intercept'])
     for m in range(M):
         start = timeit.default_timer()
         B, Theta = NNF(P, k, eps, maxit)
@@ -78,9 +79,10 @@ def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4):
 
         params.loc[m] = model.get_robustcov_results(cov_type=cov_type, maxlags=maxlags).params
         bse.loc[m] = model.get_robustcov_results(cov_type=cov_type, maxlags=maxlags).bse
+        tstat.loc[m] = params.loc[m] / bse.loc[m]
         end = timeit.default_timer()
         print('Finished Trial number {}. Time: {}'.format(str(m), end-start))
-    return record, params, bse
+    return record, params, bse, tstat
 
 
 def plot_region(Herfindahl, HHI, index, section, dpi=100):
@@ -129,8 +131,8 @@ def main():
     #print('Finished')
 
     print('Running Variation Bayes LDA')
-    HHI_FOMC1, _, _ = vb_estimate('FOMC1',onlyTF=True, K=topic_num, alpha=1.25, eta=0.025)
-    HHI_FOMC2, _, _ = vb_estimate('FOMC2', onlyTF=True, K=topic_num, alpha=1.25, eta=0.025)
+    HHI_FOMC1, _, _,_ = vb_estimate('FOMC1',onlyTF=True, K=topic_num, alpha=1, eta=0.025)
+    HHI_FOMC2, _, _,_ = vb_estimate('FOMC2', onlyTF=True, K=topic_num, alpha=0.75, eta=0.025)
 
     td_matrix1 = td_matrix1_raw / td_matrix1_raw.sum(axis=0)
     td_matrix2 = td_matrix2_raw / td_matrix2_raw.sum(axis=0)
@@ -143,8 +145,8 @@ def main():
 
     # estimate the band of LDA result
     print('Running Robust LDA Algo')
-    Herfindahl1, params1, bse1 = band(td_matrix1, topic_num, eps, maxit, draw_num, stem_num1)
-    Herfindahl2, params2, bse2 = band(td_matrix2, topic_num, eps, maxit, draw_num, stem_num2)
+    Herfindahl1, params1, bse1, tstat1 = band(td_matrix1, topic_num, eps, maxit, draw_num, stem_num1)
+    Herfindahl2, params2, bse2, tstat2 = band(td_matrix2, topic_num, eps, maxit, draw_num, stem_num2)
     print('Finished')
 
     index = pd.to_datetime(pd.read_excel(os.path.join(UTILFILE_PATH,'separation_rules.xlsx')).iloc[:, 0], format='%Y%m')
@@ -158,6 +160,8 @@ def main():
     bse1.to_excel('FOMC1_bse.xlsx')
     params2.to_excel('FOMC2_coef.xlsx')
     bse2.to_excel('FOMC2_bse.xlsx')
+    tstat1.to_excel('FOMC1_tstat.xlsx')
+    tstat2.to_excel('FOMC2_tstat.xlsx')
 
     model_FOMC1 = regression_single(HHI_FOMC1, stem_num1)
     model_FOMC2 = regression_single(HHI_FOMC2, stem_num2)
@@ -165,14 +169,18 @@ def main():
     summary1 = pd.DataFrame(index = model_FOMC1.params.index)
     summary1['Coef'] = model_FOMC1.params
     summary1['Std Error'] = model_FOMC1.bse
-    summary1['Min'] = params1.min(axis = 0)
-    summary1['Max'] = params1.max(axis = 0)
+    summary1['Coef Min'] = params1.min(axis = 0)
+    summary1['Coef Max'] = params1.max(axis = 0)
+    summary1['Tstat Min'] = tstat1.min(axis = 0)
+    summary1['Tstat Max'] = tstat1.max(axis = 0)
 
     summary2 = pd.DataFrame(index=model_FOMC2.params.index)
     summary2['Coef'] = model_FOMC2.params
     summary2['Std Error'] = model_FOMC2.bse
     summary2['Min'] = params2.min(axis=0)
     summary2['Max'] = params2.max(axis=0)
+    summary2['Tstat Min'] = tstat2.min(axis = 0)
+    summary2['Tstat Max'] = tstat2.max(axis = 0)
 
     print('**************************************************************************************')
     print('Result for FOMC1')
@@ -181,5 +189,5 @@ def main():
     print('Result for FOMC2')
     print(summary2.round(4).T.to_latex())
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

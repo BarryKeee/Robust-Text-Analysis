@@ -21,7 +21,7 @@ import numpy as np
 from scipy.special import gammaln, psi
 
 np.random.seed(100000001)
-meanchangethresh = 0.001
+meanchangethresh = 0.0001
 
 def dirichlet_expectation(alpha):
     """

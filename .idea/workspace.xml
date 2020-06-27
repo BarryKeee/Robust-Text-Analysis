@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="46aa91ac-3716-4bcb-a63e-d01418bd0ff5" name="Default Changelist" comment="" />
+    <list default="true" id="46aa91ac-3716-4bcb-a63e-d01418bd0ff5" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/estimation_on_posterior.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/VB_estimate.py" beforeDir="false" afterPath="$PROJECT_DIR$/VB_estimate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/estimation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/onlineldavb.py" beforeDir="false" afterPath="$PROJECT_DIR$/onlineldavb.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/HHI_FOMC1.png" beforeDir="false" afterPath="$PROJECT_DIR$/plots/HHI_FOMC1.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/HHI_FOMC2.png" beforeDir="false" afterPath="$PROJECT_DIR$/plots/HHI_FOMC2.png" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -25,10 +33,10 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../GitHub/Replication-file-Robust-Text-Analysis/Replication-file-Robust-Text-Analysis" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../trading" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.estimation">
+  <component name="RunManager" selected="Python.estimation_on_posterior">
     <configuration name="VB_estimate" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="Robust-Text-Analysis" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -50,27 +58,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="data_preprocess" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="Robust-Text-Analysis" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/data_preprocess.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="estimation" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="Robust-Text-Analysis" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -84,6 +71,27 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/estimation.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="estimation_on_posterior" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="Robust-Text-Analysis" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/estimation_on_posterior.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -136,11 +144,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.estimation" />
+        <item itemvalue="Python.estimation_on_posterior" />
         <item itemvalue="Python.VB_estimate" />
+        <item itemvalue="Python.estimation" />
         <item itemvalue="Python.onlineldavb" />
         <item itemvalue="Python.generate_matrix" />
-        <item itemvalue="Python.data_preprocess" />
       </list>
     </recent_temporary>
   </component>
@@ -174,46 +182,50 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1583423867874" />
-    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1583422838096">
+    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1586101638135">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1583422838096" />
-    <state width="1493" height="325" key="GridCell.Tab.0.bottom" timestamp="1585490853732">
+    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1586101638135" />
+    <state width="1493" height="274" key="GridCell.Tab.0.bottom" timestamp="1591881870743">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="325" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1585490853732" />
-    <state width="1493" height="325" key="GridCell.Tab.0.center" timestamp="1585490853732">
+    <state width="1493" height="274" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1591881870743" />
+    <state width="1493" height="274" key="GridCell.Tab.0.center" timestamp="1591881870743">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="325" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1585490853732" />
-    <state width="1493" height="325" key="GridCell.Tab.0.left" timestamp="1585490853732">
+    <state width="1493" height="274" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1591881870743" />
+    <state width="1493" height="274" key="GridCell.Tab.0.left" timestamp="1591881870743">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="325" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1585490853732" />
-    <state width="1493" height="325" key="GridCell.Tab.0.right" timestamp="1585490853732">
+    <state width="1493" height="274" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1591881870743" />
+    <state width="1493" height="274" key="GridCell.Tab.0.right" timestamp="1591881870743">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="325" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1585490853732" />
-    <state width="767" height="766" key="GridCell.Tab.1.bottom" timestamp="1585432269193">
+    <state width="1493" height="274" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1591881870743" />
+    <state width="767" height="766" key="GridCell.Tab.1.bottom" timestamp="1585747078378">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="767" height="766" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1585432269193" />
-    <state width="767" height="766" key="GridCell.Tab.1.center" timestamp="1585432269192">
+    <state width="767" height="766" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1585747078378" />
+    <state width="767" height="766" key="GridCell.Tab.1.center" timestamp="1585747078378">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="767" height="766" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1585432269192" />
-    <state width="767" height="766" key="GridCell.Tab.1.left" timestamp="1585432269192">
+    <state width="767" height="766" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1585747078378" />
+    <state width="767" height="766" key="GridCell.Tab.1.left" timestamp="1585747078378">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="767" height="766" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1585432269192" />
-    <state width="767" height="766" key="GridCell.Tab.1.right" timestamp="1585432269193">
+    <state width="767" height="766" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1585747078378" />
+    <state width="767" height="766" key="GridCell.Tab.1.right" timestamp="1585747078378">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="767" height="766" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1585432269193" />
+    <state width="767" height="766" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1585747078378" />
     <state x="277" y="54" key="SettingsEditor" timestamp="1583421429105">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="277" y="54" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1583421429105" />
+    <state x="465" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1588469456317">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="465" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1588469456317" />
     <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1583440720199">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
