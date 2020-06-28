@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="46aa91ac-3716-4bcb-a63e-d01418bd0ff5" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/estimation_on_posterior.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VB_estimate.py" beforeDir="false" afterPath="$PROJECT_DIR$/VB_estimate.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/estimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/estimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineldavb.py" beforeDir="false" afterPath="$PROJECT_DIR$/onlineldavb.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/HHI_FOMC1.png" beforeDir="false" afterPath="$PROJECT_DIR$/plots/HHI_FOMC1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/HHI_FOMC2.png" beforeDir="false" afterPath="$PROJECT_DIR$/plots/HHI_FOMC2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/estimation_on_posterior.py" beforeDir="false" afterPath="$PROJECT_DIR$/estimation_on_posterior.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

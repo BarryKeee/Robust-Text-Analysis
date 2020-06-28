@@ -5,6 +5,7 @@ import pandas as pd
 from timeit import default_timer
 from Constant import *
 import pickle
+import matplotlib.pyplot as plt
 
 maxit = 20
 topic_num = 40
@@ -33,7 +34,7 @@ NMF_HHI_FOMC2_min = []
 for i in range(maxit):
     print('Drawing posterior estimate number {}'.format(i))
     start = default_timer()
-    HHI_FOMC1, _, gamma1, lam1 = vb_estimate('FOMC1',onlyTF=True, K=topic_num, alpha=2, eta=0.025, tau=100000, kappa=1)
+    HHI_FOMC1, _, gamma1, lam1 = vb_estimate('FOMC1',onlyTF=True, K=topic_num, alpha=3, eta=0.025, tau=100000, kappa=1)
     HHI_FOMC2, _, gamma2, lam2 = vb_estimate('FOMC2', onlyTF=True, K=topic_num, alpha=2, eta=0.025, tau=100000, kappa=1)
 
     # transpose lambda so that it is aligned to be V x K
@@ -60,5 +61,21 @@ for i in range(maxit):
     VB_HHI_FOMC2_res.append(HHI_FOMC2)
     end = default_timer()
     print('Finished draw {}. Time {}'.format(i, end-start))
+
+fig1 = plt.figure()
+plt.plot(np.arange(148), np.array(VB_HHI_FOMC1_res).mean(axis=0), c='r')
+plt.plot(np.arange(148), np.array(NMF_HHI_FOMC1_max).mean(axis=0), c='k', ls='--')
+plt.plot(np.arange(148), np.array(NMF_HHI_FOMC1_min).mean(axis=0), c='k', ls='--')
+plt.fill_between(np.arange(148), np.array(NMF_HHI_FOMC1_max).mean(axis=0), np.array(NMF_HHI_FOMC1_min).mean(axis=0), color='grey', alpha=0.1)
+plt.title('Herfindahl measures for FOMC1 Meetings, alpha = 3')
+plt.show()
+
+fig1 = plt.figure()
+plt.plot(np.arange(148), np.array(VB_HHI_FOMC2_res).mean(axis=0), c='r')
+plt.plot(np.arange(148), np.array(NMF_HHI_FOMC2_max).mean(axis=0), c='k', ls='--')
+plt.plot(np.arange(148), np.array(NMF_HHI_FOMC2_min).mean(axis=0), c='k', ls='--')
+plt.fill_between(np.arange(148), np.array(NMF_HHI_FOMC2_max).mean(axis=0), np.array(NMF_HHI_FOMC2_min).mean(axis=0), color='grey', alpha=0.1)
+plt.title('Herfindahl measures for FOMC2 Meetings, alpha = 2')
+plt.show()
 
 # todo: find a way to make VB result closer to the true data
