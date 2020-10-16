@@ -9,9 +9,12 @@ from VB_estimate import vb_estimate
 import timeit
 
 topic_num = 40
-maxit = 1000
-draw_num = 200
-eps = 1e-4
+maxit = 10000
+NMF_draw_num = 120
+eps = 1e-6
+FOMC_change = pd.Timestamp('1993-11-01 00:00:00')
+cov_type='HAC'
+maxlags=4
 
 def LDA_implementation(text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5):
     ldaobj = topicmodels.LDA.LDAGibbs(text, topic_num)
@@ -24,24 +27,54 @@ def LDA_implementation(text, alpha=1.25, beta=0.025, burning=4000, sample_freq=5
     return theta, B, perplexity
 
 
+def loguniform(params):
+    low, high = params
+    return np.power(10, np.random.uniform(low, high))
 
-def NNF(P, k, eps, maxit):
+
+def NMF(P, k, eps, maxit, init_random_method='gamma', init_random_matrix=None, noise_scale=0.01, gamma_param=(-5,0),
+        verbose=True):
     V, D = P.shape
     W = P
 
-    B = np.random.uniform(1e-5, 1, size=(V, k))
-    B = B / B.sum(axis=0)
+    if init_random_method == 'gamma':
+        scale = loguniform(gamma_param)
+        B = np.random.gamma(scale, 1/scale, size=(V, k))
+        B = B / B.sum(axis=0)
 
-    Theta = np.random.uniform(1e-5, 1, size=(k, D))
-    Theta = Theta / Theta.sum(axis=0)
+        Theta = np.random.gamma(scale, 1/scale, size=(k, D))
+        Theta = Theta / Theta.sum(axis=0)
+
+    elif init_random_method == 'input_matrix':
+        assert init_random_matrix is not None, "Need to input initial matrix"
+        B_init, Theta_init = init_random_matrix
+        B = B_init + np.random.uniform(0, noise_scale, size=B_init.shape)
+        Theta = Theta_init + np.random.uniform(0, noise_scale, size=Theta_init.shape)
+        B = B / B.sum(axis=0)
+        Theta = Theta / Theta.sum(axis=0)
+
+    else:
+        B = np.random.uniform(1e-10, 1., size=(V, k))
+        B = B / B.sum(axis=0)
+
+        Theta = np.random.gamma(1e-10, 1., size=(k, D))
+        Theta = Theta / Theta.sum(axis=0)
+
 
     KL_div_prev = np.inf
     for i in range(maxit):
         Theta = (Theta / np.dot(B.T, W)) * np.dot(B.T, (W * P) / np.dot(B, Theta))
         B = (B / np.dot(W, Theta.T)) * np.dot((W * P) / np.dot(B, Theta), Theta.T)
         KL_div = KL(W, P, B, Theta)
+        if np.isnan(KL_div):
+            print('KL divergence failed because zero division encountered')
+            return None, None
+        if i % 500 == 0:
+            if verbose:
+                print('KL divergence between steps {}: before: {}. after: {}. abs diff: {}'.format(i, KL_div_prev, KL_div, abs(KL_div_prev - KL_div)))
         if abs(KL_div_prev - KL_div) < eps:
-            print("converged after {}".format(str(i)))
+            if verbose:
+                print("converged after {}".format(str(i)))
             break
         KL_div_prev = KL_div
 
@@ -58,7 +91,8 @@ def KL(W, P, B, Theta):
     return loss
 
 
-def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4):
+def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4, init_random_method='gamma', init_random_matrix=None,
+         noise_scale=0.01, gamma_param=(-3,0), verbose=True):
     record = np.zeros((M, P.shape[1]))
     covariates = pd.read_csv(os.path.join(UTILFILE_PATH,'covariates.csv'))
     covariates['num_stems'] = stem_num
@@ -71,7 +105,13 @@ def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4):
                        columns=['Transparency', 'Recession', 'EPU', 'Twoday', 'PhDs', 'num_stems', 'Intercept'])
     for m in range(M):
         start = timeit.default_timer()
-        B, Theta = NNF(P, k, eps, maxit)
+        # try multiple times because it could be that the random initial matrix has zero and failed KL calculation
+        for i in range(3):
+            B, Theta = NMF(P, k, eps, maxit, init_random_method=init_random_method, init_random_matrix=init_random_matrix,
+                               noise_scale=noise_scale, gamma_param=gamma_param, verbose=verbose)
+            if B is not None and np.isnan(B).sum() == 0:
+                break
+
         HHI = (Theta ** 2).sum(axis=0)
         record[m] = HHI
         model = sm.OLS(HHI, covariates[
@@ -81,26 +121,29 @@ def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4):
         bse.loc[m] = model.get_robustcov_results(cov_type=cov_type, maxlags=maxlags).bse
         tstat.loc[m] = params.loc[m] / bse.loc[m]
         end = timeit.default_timer()
-        print('Finished Trial number {}. Time: {}'.format(str(m), end-start))
+        if verbose:
+            print('Finished Trial number {}. Time: {}'.format(str(m), end-start))
     return record, params, bse, tstat
 
 
-def plot_region(Herfindahl, HHI, index, section, dpi=100):
+def plot_region(HHI_max, HHI_min, HHI_mean, index, section, suffix='', dpi=100):
 
-    df = pd.DataFrame(columns=['NMF max', 'NMF min', 'LDA'], index=index)
-    df['NMF max'] = Herfindahl.max(axis=0)
-    df['NMF min'] = Herfindahl.min(axis=0)
-    df['LDA'] = HHI
+    df = pd.DataFrame(columns=['NMF max', 'NMF min', 'HHI mean'], index=index)
+    df['NMF max'] = HHI_max
+    df['NMF min'] = HHI_min
+    df['LDA'] = HHI_mean
 
     fig = plt.figure()
     plt.plot(df['NMF max'], c='k', ls='--')
     plt.plot(df['NMF min'], c='k', ls='--')
-    plt.fill_between(df.index, df['NMF max'], df['NMF min'], color='grey', alpha=0.1)
-    LDA, = plt.plot(df['LDA'], c='r', linewidth=2.5)
+    plt.fill_between(df.index, df['NMF max'], df['NMF min'], color='grey', alpha=0.1, label='Prior Robust HHI Measure')
+    plt.axvline(FOMC_change, color='b', label='FOMC Transparency Policy Change')
+    LDA, = plt.plot(df['LDA'], c='r', linewidth=2.5, label='HHI of LDA Implementation')
+    #plt.legend()
 
     plt.title('Herfindahl measure of topic concentration in {}'.format(section))
     # plt.legend(handles = [LDA])
-    plt.savefig(os.path.join(PLOT_PATH, 'HHI_{}.png'.format(section)), format='png', dpi=dpi)
+    plt.savefig(os.path.join(PLOT_PATH, 'HHI_{}.png'.format(section + suffix)), format='png', dpi=dpi)
 
 def regression_single(HHI, stem_num):
 
@@ -113,81 +156,53 @@ def regression_single(HHI, stem_num):
     return model
 
 
-def main():
+def _sample_dirichlet(alpha):
+    """
+    Sample from dirichlet distribution. Alpha is a matrix whose rows are params (resulting sample sum = 1 across axis 1
+    """
+    res = []
+    for i in range(alpha.shape[0]):
+        res.append(np.random.dirichlet(alpha[i,:]))
 
-    print('Reading cached data')
-    with open(os.path.join(MATRIX_PATH, 'FOMC1_text_onlyTF.pkl'),'rb') as f:
-        FOMC1_text = pickle.load(f)
-    with open(os.path.join(MATRIX_PATH, 'FOMC2_text_onlyTF.pkl'),'rb') as f:
-        FOMC2_text = pickle.load(f)
-    td_matrix1_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC1_meeting_matrix_onlyTF.xlsx'), index_col=0)
-    td_matrix2_raw = pd.read_excel(os.path.join(MATRIX_PATH,'FOMC2_meeting_matrix_onlyTF.xlsx'), index_col=0)
+    return np.array(res)
 
-    #print('Running Gibbs Sampling LDA')
-    #theta_FOMC1, _, _ = LDA_implementation(FOMC1_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
-    #theta_FOMC2, _, _ = LDA_implementation(FOMC2_text, alpha=1.25, beta=0.025, burning=4000, sample_freq=50, sample_size=80, keep_num=5)
-    #HHI_FOMC1 = (theta_FOMC1 ** 2).sum(axis=1)
-    #HHI_FOMC2 = (theta_FOMC2 ** 2).sum(axis=1)
-    #print('Finished')
 
-    print('Running Variation Bayes LDA')
-    HHI_FOMC1, _, _,_ = vb_estimate('FOMC1',onlyTF=True, K=topic_num, alpha=1, eta=0.025)
-    HHI_FOMC2, _, _,_ = vb_estimate('FOMC2', onlyTF=True, K=topic_num, alpha=0.75, eta=0.025)
 
-    td_matrix1 = td_matrix1_raw / td_matrix1_raw.sum(axis=0)
-    td_matrix2 = td_matrix2_raw / td_matrix2_raw.sum(axis=0)
+def estimate_on_posterior(td_matrix1_raw, td_matrix2_raw, topic_num, alpha, eta, init_random_method='gamma', init_param=(-3,1),
+                          verbose=False):
+
+    _, _, gamma1, lam1, _, _ = vb_estimate('FOMC1',onlyTF=True, K=topic_num, alpha=alpha, eta=eta)
+    _, _, gamma2, lam2, _, _ = vb_estimate('FOMC2', onlyTF=True, K=topic_num, alpha=alpha, eta=eta)
+
+    # sample from dirichlet distribution given lambda and gamma
+    B1 = _sample_dirichlet(lam1).T
+    B2 = _sample_dirichlet(lam2).T
+    Theta1 = _sample_dirichlet(gamma1).T
+    Theta2 = _sample_dirichlet(gamma2).T
+
+    P1_hat = np.dot(B1, Theta1)
+    P2_hat = np.dot(B2, Theta2)
 
     stem_num1 = td_matrix1_raw.sum(axis=0)
     stem_num2 = td_matrix2_raw.sum(axis=0)
 
-    td_matrix1[td_matrix1 == 0] = 1e-12
-    td_matrix2[td_matrix2 == 0] = 1e-12
+    Herfindahl1, params1, bse1, tstat1 = band(P1_hat, topic_num, eps, maxit, NMF_draw_num, stem_num1, init_random_method=init_random_method,
+                                              gamma_param=init_param, verbose=verbose)
+    Herfindahl2, params2, bse2, tstat2 = band(P2_hat, topic_num, eps, maxit, NMF_draw_num, stem_num2, init_random_method=init_random_method,
+                                              gamma_param=init_param, verbose=verbose)
 
-    # estimate the band of LDA result
-    print('Running Robust LDA Algo')
-    Herfindahl1, params1, bse1, tstat1 = band(td_matrix1, topic_num, eps, maxit, draw_num, stem_num1)
-    Herfindahl2, params2, bse2, tstat2 = band(td_matrix2, topic_num, eps, maxit, draw_num, stem_num2)
-    print('Finished')
+    section1_max = (Herfindahl1.max(axis=0), params1.max(), bse1.max(), tstat1.max())
+    section1_min = (Herfindahl1.min(axis=0), params1.min(), bse1.min(), tstat1.min())
+    section2_max = (Herfindahl2.max(axis=0), params2.max(), bse2.max(), tstat2.max())
+    section2_min = (Herfindahl2.min(axis=0), params2.min(), bse2.min(), tstat2.min())
 
-    index = pd.to_datetime(pd.read_excel(os.path.join(UTILFILE_PATH,'separation_rules.xlsx')).iloc[:, 0], format='%Y%m')
-
-    # plot estimation results
-    plot_region(Herfindahl1, HHI_FOMC1, index,'FOMC1')
-    plot_region(Herfindahl2, HHI_FOMC2, index,'FOMC2')
-
-    # save regression results
-    params1.to_excel('FOMC1_coef.xlsx')
-    bse1.to_excel('FOMC1_bse.xlsx')
-    params2.to_excel('FOMC2_coef.xlsx')
-    bse2.to_excel('FOMC2_bse.xlsx')
-    tstat1.to_excel('FOMC1_tstat.xlsx')
-    tstat2.to_excel('FOMC2_tstat.xlsx')
+    HHI_FOMC1 = (Theta1**2).sum(axis=0)
+    HHI_FOMC2 = (Theta2**2).sum(axis=0)
 
     model_FOMC1 = regression_single(HHI_FOMC1, stem_num1)
     model_FOMC2 = regression_single(HHI_FOMC2, stem_num2)
 
-    summary1 = pd.DataFrame(index = model_FOMC1.params.index)
-    summary1['Coef'] = model_FOMC1.params
-    summary1['Std Error'] = model_FOMC1.bse
-    summary1['Coef Min'] = params1.min(axis = 0)
-    summary1['Coef Max'] = params1.max(axis = 0)
-    summary1['Tstat Min'] = tstat1.min(axis = 0)
-    summary1['Tstat Max'] = tstat1.max(axis = 0)
+    return section1_max, section1_min, section2_max, section2_min, HHI_FOMC1, HHI_FOMC2, model_FOMC1, model_FOMC2
 
-    summary2 = pd.DataFrame(index=model_FOMC2.params.index)
-    summary2['Coef'] = model_FOMC2.params
-    summary2['Std Error'] = model_FOMC2.bse
-    summary2['Min'] = params2.min(axis=0)
-    summary2['Max'] = params2.max(axis=0)
-    summary2['Tstat Min'] = tstat2.min(axis = 0)
-    summary2['Tstat Max'] = tstat2.max(axis = 0)
 
-    print('**************************************************************************************')
-    print('Result for FOMC1')
-    print(summary1.round(4).T.to_latex())
-    print('**************************************************************************************')
-    print('Result for FOMC2')
-    print(summary2.round(4).T.to_latex())
 
-# if __name__ == '__main__':
-#     main()

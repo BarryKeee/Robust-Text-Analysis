@@ -20,12 +20,10 @@ def vb_estimate(section, onlyTF=True, K=40, alpha=0.025, eta=0.025, tau=1024, ka
     olda = onlineldavb.OnlineLDA(vocab_1, K, D, alpha, eta, tau, kappa)
     (gamma, bound) = olda.update_lambda(text1)
 
-    # posterior mean of theta is gamma_dk / sum_d gamma_dk
-    gamma = gamma.T
     # Normalize gamma column-wise (sum across rows for each column)
     posterior_mean = gamma / gamma.sum(axis=0)
     # compute herfindehl of the posterior mean
-    return (posterior_mean**2).sum(axis=0),posterior_mean, gamma, olda._lambda
+    return (posterior_mean**2).sum(axis=0),posterior_mean, gamma, olda._lambda, olda, text1
 
 if __name__ == '__main__':
     vb_estimate('FOMC1')
