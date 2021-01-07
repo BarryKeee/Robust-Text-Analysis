@@ -32,7 +32,7 @@ def loguniform(params):
     return np.power(10, np.random.uniform(low, high))
 
 
-def NMF(P, k, eps, maxit, init_random_method='gamma', init_random_matrix=None, noise_scale=0.01, gamma_param=(-5,0),
+def NMF(P, k, eps, maxit, init_random_method='gamma', init_random_matrix=None, gamma_param=(-5,0),
         verbose=True):
     V, D = P.shape
     W = P
@@ -45,13 +45,11 @@ def NMF(P, k, eps, maxit, init_random_method='gamma', init_random_matrix=None, n
         Theta = np.random.gamma(scale, 1/scale, size=(k, D))
         Theta = Theta / Theta.sum(axis=0)
 
-    elif init_random_method == 'input_matrix':
+    elif init_random_method == 'init_matrix':
         assert init_random_matrix is not None, "Need to input initial matrix"
         B_init, Theta_init = init_random_matrix
-        B = B_init + np.random.uniform(0, noise_scale, size=B_init.shape)
-        Theta = Theta_init + np.random.uniform(0, noise_scale, size=Theta_init.shape)
-        B = B / B.sum(axis=0)
-        Theta = Theta / Theta.sum(axis=0)
+        B = B_init / B_init.sum(axis=0)
+        Theta = Theta_init / Theta_init.sum(axis=0)
 
     else:
         B = np.random.uniform(1e-10, 1., size=(V, k))
@@ -91,8 +89,8 @@ def KL(W, P, B, Theta):
     return loss
 
 
-def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4, init_random_method='gamma', init_random_matrix=None,
-         noise_scale=0.01, gamma_param=(-3,0), verbose=True):
+def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4, init_random_method='gamma', init_random_matrix_list=None,
+         gamma_param=(-3,0), verbose=True):
     record = np.zeros((M, P.shape[1]))
     covariates = pd.read_csv(os.path.join(UTILFILE_PATH,'covariates.csv'))
     covariates['num_stems'] = stem_num
@@ -104,11 +102,17 @@ def band(P, k, eps, maxit, M, stem_num, cov_type='HAC', maxlags=4, init_random_m
     tstat = pd.DataFrame(index=range(M),
                        columns=['Transparency', 'Recession', 'EPU', 'Twoday', 'PhDs', 'num_stems', 'Intercept'])
     for m in range(M):
+        if init_random_method == 'init_matrix':
+            assert M == len(init_random_matrix_list), 'Input matrix list is not M'
+            init_random_matrix = init_random_matrix_list[m]
+        else:
+            init_random_matrix = None
+
         start = timeit.default_timer()
         # try multiple times because it could be that the random initial matrix has zero and failed KL calculation
         for i in range(3):
             B, Theta = NMF(P, k, eps, maxit, init_random_method=init_random_method, init_random_matrix=init_random_matrix,
-                               noise_scale=noise_scale, gamma_param=gamma_param, verbose=verbose)
+                                gamma_param=gamma_param, verbose=verbose)
             if B is not None and np.isnan(B).sum() == 0:
                 break
 
@@ -141,7 +145,7 @@ def plot_region(HHI_max, HHI_min, HHI_mean, index, section, suffix='', dpi=100):
     LDA, = plt.plot(df['LDA'], c='r', linewidth=2.5, label='HHI of LDA Implementation')
     #plt.legend()
 
-    plt.title('Herfindahl measure of topic concentration in {}'.format(section))
+    #plt.title('Herfindahl measure of topic concentration in {}'.format(section))
     # plt.legend(handles = [LDA])
     plt.savefig(os.path.join(PLOT_PATH, 'HHI_{}.png'.format(section + suffix)), format='png', dpi=dpi)
 
@@ -205,4 +209,35 @@ def estimate_on_posterior(td_matrix1_raw, td_matrix2_raw, topic_num, alpha, eta,
     return section1_max, section1_min, section2_max, section2_min, HHI_FOMC1, HHI_FOMC2, model_FOMC1, model_FOMC2
 
 
+def posterior_draw(topic_num, alpha, eta, draw_num):
 
+    matrix_FOMC1_all = []
+    matrix_FOMC2_all = []
+    HHI_FOMC1_all = []
+    HHI_FOMC2_all = []
+    for i in range(draw_num):
+        print('Making posterior draw # {}'.format(i))
+        _, _, gamma1, lam1, _, _ = vb_estimate('FOMC1',onlyTF=True, K=topic_num, alpha=alpha, eta=eta)
+        _, _, gamma2, lam2, _, _ = vb_estimate('FOMC2', onlyTF=True, K=topic_num, alpha=alpha, eta=eta)
+
+        B1 = _sample_dirichlet(lam1).T
+        B2 = _sample_dirichlet(lam2).T
+        Theta1 = _sample_dirichlet(gamma1).T
+        Theta2 = _sample_dirichlet(gamma2).T
+
+        HHI_FOMC1 = (Theta1**2).sum(axis=0)
+        HHI_FOMC2 = (Theta2**2).sum(axis=0)
+
+        matrix_FOMC1_all.append((B1, Theta1))
+        matrix_FOMC2_all.append((B2, Theta2))
+        HHI_FOMC1_all.append(HHI_FOMC1)
+        HHI_FOMC2_all.append(HHI_FOMC2)
+
+    return matrix_FOMC1_all, matrix_FOMC2_all, HHI_FOMC1_all, HHI_FOMC2_all
+
+
+
+#todo:
+#1. For algorithm 2, increase the number of iterations and decrease tol
+#2. For algorithm 2, use the posterior draws of B and Theta in algorithm 1 (take 120 of the 200 draws) as the starting point of NMF
+#3. In algorithm 2, not report the Gibbs sampling but continue to use the same red line as in algorithm 1

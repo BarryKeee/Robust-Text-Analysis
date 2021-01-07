@@ -6,7 +6,7 @@ import onlineldavb
 
 def vb_estimate(section, onlyTF=True, K=40, alpha=0.025, eta=0.025, tau=1024, kappa=0.7):
     print('VB Estimation for {}'.format(section))
-    vocab_1 = pd.read_excel(os.path.join(MATRIX_PATH, section + '_dictionary_meeting{}.xlsx'.format('_onlyTF' if onlyTF else '')), index_col=0).index
+    vocab_1 = pd.read_excel(os.path.join(MATRIX_PATH, section + '_dictionary_meeting{}.xlsx'.format('_onlyTF' if onlyTF else '')), index_col=0, engine='openpyxl').index
     vocab_1 = list(vocab_1)
 
     with open(os.path.join(MATRIX_PATH, section + '_text{}.pkl'.format('_onlyTF' if onlyTF else '')), 'rb') as f:

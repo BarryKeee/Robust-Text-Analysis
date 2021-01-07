@@ -157,7 +157,7 @@ def generate_tf_only_matrix(tf_idf_threshold=[9000,6000], additional_stop_words 
 
         keys_to_use = TF.sort_values(ascending=False)[:N].index.values
 
-        TF.sort_values(ascending=False).reset_index()[0].plot(c=color)
+        TF.sort_values(ascending=False).reset_index()[0][:max(tf_idf_threshold)*2].plot(c=color)
         plt.xlabel('TF-IDF rank')
         plt.ylabel('TF-IDF score')
         plt.axvline(N, linestyle='--', color=color)
